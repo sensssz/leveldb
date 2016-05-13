@@ -135,17 +135,17 @@ void usage(ostream &os) {
     os << "Usage: glakv [OPTIONS]" << endl;
     os << "[OPTIONS]:" << endl;
     os << "--load" << endl;
-    os << "    -l load data into database" << endl;
+    os << "-l       load data into database" << endl;
     os << "--execute" << endl;
-    os << "       -e execute benchmark" << endl;
+    os << "-e       execute benchmark" << endl;
     os << "--help" << endl;
-    os << "    -h show this message" << endl;
+    os << "-h       show this message" << endl;
     os << "--size" << endl;
-    os << "    -s number of kv pairs in/to load into the database" << endl;
+    os << "-s       number of kv pairs in/to load into the database" << endl;
     os << "--client" << endl;
-    os << "      -c number of concurrent clients" << endl;
+    os << "-c       number of concurrent clients" << endl;
     os << "--dir" << endl;
-    os << "   -d directory to store the database files" << endl;
+    os << "-d       directory to store the database files" << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -184,7 +184,10 @@ int main(int argc, char *argv[]) {
                 num_clients = atoi(optarg);
             case 'd':
                 dir = optarg;
+            case '?':
+                break;
             default:
+                cout << "opt is " << (char) c << endl;
                 usage(cerr);
         }
     }
