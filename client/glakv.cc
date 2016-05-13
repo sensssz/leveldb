@@ -53,7 +53,7 @@ static inline DB *db_open(string &dir, Cache *cache, bool create) {
     return db;
 }
 
-void load_data(string dir, int db_size) {
+void load_data(string &dir, int db_size) {
     DB *db = db_open(dir, nullptr, true);
     cout << "Loading " << db_size << " kv pairs into the database..." << endl;
     char key_buf[KEY_LEN];
@@ -62,7 +62,7 @@ void load_data(string dir, int db_size) {
 
     // Load data into the database, one batch at a time
     WriteBatch batch;
-    const int batch_size = 1024;
+    const int batch_size = db_size / 5;
     uint64_t count = 0;
     while (count < db_size) {
         int num_writes = min(batch_size, (const int &) (db_size - count));
@@ -107,7 +107,7 @@ void execute(DB *db, int database_size) {
     }
 }
 
-void run(string dir, int num_threads, int database_size) {
+void run(string &dir, int num_threads, int database_size) {
     Cache *cache = NewLRUCache(10 * 1024 * 1024);
     DB *db = db_open(dir, cache, false);
     vector<thread> threads;
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
             {"size",    required_argument, 0, 's'},
             {"client",  required_argument, 0, 'c'},
             {"dir",     required_argument, 0, 'd'},
-            {0, 0,                         0, 0}
+            {0, 0, 0, 0}
     };
 
     int c;
