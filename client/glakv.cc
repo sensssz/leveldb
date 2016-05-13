@@ -171,7 +171,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (help_flag) {
+    if (help_flag || (!load_flag && !execute_flag)) {
         usage(cout);
         return 0;
     }
