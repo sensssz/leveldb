@@ -96,7 +96,6 @@ void load_data(string &dir, int db_size) {
  * possibility, key + 2 has the second highest possibility, etc.
  */
 void execute(DB *db, int database_size, int num_exps) {
-    cout << "Thread " << std::this_thread::get_id() << " starts" << endl;
     exponential_distribution exp_dist(5, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);

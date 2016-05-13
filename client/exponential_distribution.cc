@@ -23,7 +23,7 @@ uint64_t exponential_distribution::next() {
     do {
         rand = dist(generator);
         key = (uint64_t) (rand / interval_size);
-    } while (rand < max_val);
+    } while (rand >= max_val);
     return key;
 }
 
