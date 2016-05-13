@@ -9,7 +9,7 @@ OBJS = glakv.o exponential_distribution.o
 all: exec
 
 exec: $(OBJS)
-    $(CC) $(LDFLAGS) $(OBJS) -o glakv
+	$(CC) $(LDFLAGS) $(OBJS) -o glakv
 
 glakv.o: glakv.cc config.h
 	$(CC) $(CXXFLAGS) glakv.cc -o glakv.o
