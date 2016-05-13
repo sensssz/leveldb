@@ -7,5 +7,5 @@ CXXFLAGS = -std=c++11 -O3 -g $(INCLUDE)
 
 all: main
 
-main: config.h main.ccg
+main: config.h main.cc
 	$(CC) $(CXXFLAGS) $(LDFLAGS) main.cc -o main
