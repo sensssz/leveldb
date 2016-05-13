@@ -16,3 +16,6 @@ glakv.o: glakv.cc config.h
 
 exponential_distribution.o: exponential_distribution.cc exponential_distribution.h
 	$(CC) $(CXXFLAGS) exponential_distribution.cc -o exponential_distribution.o
+
+clean:
+	rm $(OBJS)
