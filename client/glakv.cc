@@ -53,7 +53,7 @@ static inline DB *db_open(string &dir, Cache *cache, bool create) {
     return db;
 }
 
-void load_data(string &dir, int db_size) {
+void load_data(string &dir, uint64_t db_size) {
     DB *db = db_open(dir, nullptr, true);
     cout << "Loading " << db_size << " kv pairs into the database..." << endl;
     char key_buf[KEY_LEN];
@@ -64,10 +64,10 @@ void load_data(string &dir, int db_size) {
     WriteBatch batch;
     WriteOptions options;
     options.sync = true;
-    const int batch_size = db_size / 5;
+    const uint64_t batch_size = db_size / 5;
     uint64_t count = 0;
     while (count < db_size) {
-        int num_writes = min(batch_size, (const int &) (db_size - count));
+        uint64_t num_writes = min(batch_size, db_size - count);
         for (uint64_t i = 0; i < num_writes; ++i, ++count) {
             char val_buf[VAL_LEN];
             *id = count;
@@ -169,7 +169,7 @@ int main(int argc, char *argv[]) {
     int load_flag = 0;
     int execute_flag = 0;
     int help_flag = 0;
-    int database_size = DB_SIZE;
+    uint64_t database_size = DB_SIZE;
     int num_clients = NUM_CLIENTS;
     int num_exps = NUM_EXP;
     string dir("glakv_home");
@@ -185,7 +185,7 @@ int main(int argc, char *argv[]) {
                 help_flag = 1;
                 break;
             case 's':
-                database_size = atoi(optarg);
+                database_size = strtoull(optarg, nullptr, 10);
                 break;
             case 'c':
                 num_clients = atoi(optarg);
