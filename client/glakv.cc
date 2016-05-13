@@ -102,6 +102,7 @@ void execute(DB *db, int database_size, int num_exps) {
     uint64_t *id = id_field(key_buf, KEY_LEN);
     uint64_t key = (uint64_t) (rand() % database_size);
     string val;
+    auto start = std::chrono::high_resolution_clock::now();
     for (int count = 0; count < num_exps; ++count) {
         *id = key;
         Slice key_slice(key_buf, KEY_LEN);
@@ -110,6 +111,10 @@ void execute(DB *db, int database_size, int num_exps) {
         uint64_t next_rank = exp_dist.next();
         key = (next_rank + key) % database_size;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end-start;
+    cout << "Thread" << std::this_thread::get_id() << " finishes "
+         << num_exps << " operations in " << diff.count() << "s" << endl;
 }
 
 void run(string &dir, int num_threads, int database_size, int num_exps) {
