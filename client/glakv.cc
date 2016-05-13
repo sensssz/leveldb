@@ -27,7 +27,6 @@ using std::thread;
 using std::uniform_int_distribution;
 using std::vector;
 using leveldb::Cache;
-using leveldb::Cache::Handle;
 using leveldb::DB;
 using leveldb::Options;
 using leveldb::Status;
@@ -108,7 +107,7 @@ void execute(DB *db, int database_size, Cache *cache) {
         Slice key_slice(key_buf, KEY_LEN);
         Status s = db->Get(ReadOptions(), key_slice, &val);
         assert(s.ok());
-        Handle *handle = cache->Lookup(key_slice);
+        Cache::Handle *handle = cache->Lookup(key_slice);
         assert(handle);
         delete handle;
         uint64_t next_rank = exp_dist.next();
