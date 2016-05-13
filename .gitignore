@@ -9,3 +9,5 @@ db_bench
 leveldbutil
 .idea/
 CMakeLists.txt
+client/glakv
+client/glakv_home
