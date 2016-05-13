@@ -95,14 +95,14 @@ void load_data(string &dir, int db_size) {
  * an exponential distribution, where key + 1 has the highest
  * possibility, key + 2 has the second highest possibility, etc.
  */
-void execute(DB *db, int database_size, Cache *cache) {
+void execute(DB *db, int database_size, int num_exps) {
     exponential_distribution exp_dist(5, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);
     uint64_t *id = id_field(key_buf, KEY_LEN);
     uint64_t key = (uint64_t) (rand() % database_size);
     string val;
-    for (int count = 0; count < NUM_EXP; ++count) {
+    for (int count = 0; count < num_exps; ++count) {
         *id = key;
         Slice key_slice(key_buf, KEY_LEN);
         Status s = db->Get(ReadOptions(), key_slice, &val);
@@ -112,12 +112,12 @@ void execute(DB *db, int database_size, Cache *cache) {
     }
 }
 
-void run(string &dir, int num_threads, int database_size) {
+void run(string &dir, int num_threads, int database_size, int num_exps) {
     Cache *cache = NewLRUCache(10 * 1024 * 1024);
     DB *db = db_open(dir, cache, false);
     vector<thread> threads;
     for (int count = 0; count < num_threads; ++count) {
-        thread t(execute, db, database_size, cache);
+        thread t(execute, db, database_size, num_exps);
         threads.push_back(std::move(t));
     }
     for (auto &t : threads) {
@@ -143,6 +143,8 @@ void usage(ostream &os) {
     os << "-c       number of concurrent clients" << endl;
     os << "--dir" << endl;
     os << "-d       directory to store the database files" << endl;
+    os << "--num" << endl;
+    os << "-n       number of operations each client does" << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -163,8 +165,9 @@ int main(int argc, char *argv[]) {
     int help_flag = 0;
     int database_size = DB_SIZE;
     int num_clients = NUM_CLIENTS;
+    int num_exps = NUM_EXP;
     string dir("glakv_home");
-    while ((c = getopt_long(argc, argv, "lehs:c:d:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "lehs:c:d:n:", long_options, &option_index)) != -1) {
         switch(c) {
             case 'l':
                 load_flag = 1;
@@ -181,6 +184,8 @@ int main(int argc, char *argv[]) {
                 num_clients = atoi(optarg);
             case 'd':
                 dir = optarg;
+            case 'n':
+                num_exps = atoi(optarg);
             case '?':
                 break;
             default:
@@ -198,7 +203,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (execute_flag) {
-        run(dir, num_clients, database_size);
+        run(dir, num_clients, database_size, num_exps);
     }
     return 0;
 }
