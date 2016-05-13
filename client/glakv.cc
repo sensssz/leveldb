@@ -45,6 +45,7 @@ static inline DB *db_open(string &dir, Cache *cache, bool create) {
     Options options;
     options.create_if_missing = create;
     options.block_cache = cache;
+    options.compression = leveldb::kNoCompression;
     Status status = DB::Open(options, dir, &db);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
@@ -95,7 +96,7 @@ void load_data(string &dir, int db_size) {
  * an exponential distribution, where key + 1 has the highest
  * possibility, key + 2 has the second highest possibility, etc.
  */
-void execute(DB *db, int database_size, int num_exps) {
+void execute(DB *db, int database_size, int num_exps, Cache *cache) {
     exponential_distribution exp_dist(5, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);
@@ -108,6 +109,9 @@ void execute(DB *db, int database_size, int num_exps) {
         Slice key_slice(key_buf, KEY_LEN);
         Status s = db->Get(ReadOptions(), key_slice, &val);
         assert(s.ok());
+        Cache::Handle *handle = cache->Lookup(key_buf);
+        assert(handle);
+        cache->Release(handle);
         uint64_t next_rank = exp_dist.next();
         key = (next_rank + key) % database_size;
     }
@@ -123,7 +127,7 @@ void run(string &dir, int num_threads, int database_size, int num_exps) {
     DB *db = db_open(dir, cache, false);
     vector<thread> threads;
     for (int count = 0; count < num_threads; ++count) {
-        thread t(execute, db, database_size, num_exps);
+        thread t(execute, db, database_size, num_exps, cache);
         threads.push_back(std::move(t));
     }
     for (auto &t : threads) {
