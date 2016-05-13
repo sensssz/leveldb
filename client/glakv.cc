@@ -27,6 +27,7 @@ using std::thread;
 using std::uniform_int_distribution;
 using std::vector;
 using leveldb::Cache;
+using leveldb::Cache::Handle;
 using leveldb::DB;
 using leveldb::Options;
 using leveldb::Status;
@@ -62,6 +63,8 @@ void load_data(string &dir, int db_size) {
 
     // Load data into the database, one batch at a time
     WriteBatch batch;
+    WriteOptions options;
+    options.sync = true;
     const int batch_size = db_size / 5;
     uint64_t count = 0;
     while (count < db_size) {
@@ -73,7 +76,11 @@ void load_data(string &dir, int db_size) {
             Slice val(val_buf, VAL_LEN);
             batch.Put(key, val);
         }
-        db->Write(WriteOptions(), &batch);
+        Status status = db->Write(options, &batch);
+        if (!status.ok()) {
+            cerr << status.ToString() << endl;
+            break;
+        }
         batch.Clear();
         uint64_t percentage_done = (count * 100) / db_size;
         string progress_bar(percentage_done, '.');
@@ -89,7 +96,7 @@ void load_data(string &dir, int db_size) {
  * an exponential distribution, where key + 1 has the highest
  * possibility, key + 2 has the second highest possibility, etc.
  */
-void execute(DB *db, int database_size) {
+void execute(DB *db, int database_size, Cache *cache) {
     exponential_distribution exp_dist(5, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);
@@ -101,7 +108,9 @@ void execute(DB *db, int database_size) {
         Slice key_slice(key_buf, KEY_LEN);
         Status s = db->Get(ReadOptions(), key_slice, &val);
         assert(s.ok());
-
+        Handle *handle = cache->Lookup(key_slice);
+        assert(handle);
+        delete handle;
         uint64_t next_rank = exp_dist.next();
         key = (next_rank + key) % database_size;
     }
@@ -112,7 +121,7 @@ void run(string &dir, int num_threads, int database_size) {
     DB *db = db_open(dir, cache, false);
     vector<thread> threads;
     for (int count = 0; count < num_threads; ++count) {
-        thread t(execute, db, database_size);
+        thread t(execute, db, database_size, cache);
         threads.push_back(std::move(t));
     }
     for (auto &t : threads) {
