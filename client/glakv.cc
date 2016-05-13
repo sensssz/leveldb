@@ -6,6 +6,7 @@
 
 #include <getopt.h>
 #include <iostream>
+#include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
@@ -22,8 +23,10 @@ using leveldb::Slice;
 using leveldb::WriteOptions;
 using leveldb::ReadOptions;
 using leveldb::WriteBatch;
+using leveldb::NewLRUCache;
 
 void load_data(DB *db) {
+    cout << "Loading " << DB_SIZE << " kv pairs into the database" << endl;
     WriteBatch batch;
     for (int count = 0; count < DB_SIZE; ++count) {
         char key_buf[KEY_LEN];
@@ -33,6 +36,7 @@ void load_data(DB *db) {
         batch.Put(key, val);
     }
     db->Write(WriteOptions(), &batch);
+    cout << "All kv pairs loaded into the database" << endl;
 }
 
 void usage(ostream &os) {
@@ -45,6 +49,7 @@ int main(int argc, char *argv[]) {
     DB *db;
     Options options;
     options.create_if_missing = true;
+    options.block_cache = NewLRUCache(10 * 1024 * 1024);
     Status status = DB::Open(options, "/tmp/testdb", &db);
     if (!status.ok()) {
         cerr << status.ToString() << endl;
@@ -64,5 +69,7 @@ int main(int argc, char *argv[]) {
                 usage(cerr);
         }
     }
+    delete db;
+    delete options.block_cache;
     return 0;
 }
