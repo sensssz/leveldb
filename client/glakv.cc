@@ -113,8 +113,9 @@ void execute(DB *db, int database_size, int num_exps) {
     }
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end-start;
-    cout << "Thread" << std::this_thread::get_id() << " finishes "
+    cout << "Thread " << std::this_thread::get_id() << " finishes "
          << num_exps << " operations in " << diff.count() << "s" << endl;
+    cout << "Avg latency: " << num_exps / diff.count() << endl;
 }
 
 void run(string &dir, int num_threads, int database_size, int num_exps) {
@@ -208,7 +209,11 @@ int main(int argc, char *argv[]) {
     }
 
     if (execute_flag) {
+        auto start = std::chrono::high_resolution_clock::now();
         run(dir, num_clients, database_size, num_exps);
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> diff = end-start;
+        cout << "Throughput: " << (num_clients * num_exps) / diff.count() << endl;
     }
     return 0;
 }
