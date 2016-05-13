@@ -186,16 +186,21 @@ int main(int argc, char *argv[]) {
                 break;
             case 's':
                 database_size = atoi(optarg);
+                break;
             case 'c':
                 num_clients = atoi(optarg);
+                break;
             case 'd':
                 dir = optarg;
+                break;
             case 'n':
                 num_exps = atoi(optarg);
+                break;
             case '?':
                 break;
             default:
                 usage(cerr);
+                break;
         }
     }
 
