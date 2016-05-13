@@ -124,10 +124,20 @@ void run(string dir, int num_threads, int database_size) {
 }
 
 void usage(ostream &os) {
-    os << "Usage: glakv -l load database" << endl;
-    os << "             -s <number of kv pairs to load> database size" << endl;
-    os << "             -e <number of clients> execute workload" << endl;
-    os << "             -h print this message" << endl;
+    os << "Usage: glakv [OPTIONS]" << endl;
+    os << "[OPTIONS]:" << endl;
+    os << "--load" << endl;
+    os << "    -l load data into database" << endl;
+    os << "--execute" << endl;
+    os << "       -e execute benchmark" << endl;
+    os << "--help" << endl;
+    os << "    -h show this message" << endl;
+    os << "--size" << endl;
+    os << "    -s number of kv pairs in/to load into the database" << endl;
+    os << "--client" << endl;
+    os << "      -c number of concurrent clients" << endl;
+    os << "--dir" << endl;
+    os << "   -d directory to store the database files" << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -148,7 +158,7 @@ int main(int argc, char *argv[]) {
     int help_flag = 0;
     int database_size = DB_SIZE;
     int num_clients = NUM_CLIENTS;
-    string dir;
+    string dir("glakv_home");
     while ((c = getopt_long(argc, argv, "lehs:c:d:", long_options, &option_index)) != -1) {
         switch(c) {
             case 'l':
