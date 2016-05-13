@@ -107,9 +107,6 @@ void execute(DB *db, int database_size, Cache *cache) {
         Slice key_slice(key_buf, KEY_LEN);
         Status s = db->Get(ReadOptions(), key_slice, &val);
         assert(s.ok());
-        Cache::Handle *handle = cache->Lookup(key_slice);
-        assert(handle);
-        delete handle;
         uint64_t next_rank = exp_dist.next();
         key = (next_rank + key) % database_size;
     }
@@ -187,7 +184,6 @@ int main(int argc, char *argv[]) {
             case '?':
                 break;
             default:
-                cout << "opt is " << (char) c << endl;
                 usage(cerr);
         }
     }
