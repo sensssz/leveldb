@@ -123,10 +123,12 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
 int setup_server() {
     int sockfd, portno;
     struct sockaddr_in serv_addr;
-    sockfd = socket(AF_INET, SOCK_STREAM | SO_REUSEADDR | SO_REUSEPORT, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         error("ERROR opening socket");
     }
+    int yes = 1;
+    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int));
     bzero((char *) &serv_addr, sizeof(serv_addr));
     portno = 4242;
     serv_addr.sin_family = AF_INET;
