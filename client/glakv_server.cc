@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <thread>
+#include <chrono>
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
@@ -236,7 +237,7 @@ int main(int argc, char *argv[])
                            (struct sockaddr *) &cli_addr,
                            &clilen);
         if (newsockfd == EAGAIN) {
-            std::this_thread::sleep_for(1000000);
+            usleep(100);
             continue;
         } else if (newsockfd < 0) {
             error("ERROR on accept");
