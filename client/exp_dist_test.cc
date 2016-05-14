@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
 
     // if particles decay once per second on average,
     // how much time, in seconds, until the next one?
-    std::exponential_distribution<> d(1);
+    std::exponential_distribution<> d(1.0);
 
     std::unordered_map<int, int> hist;
     for(int n=0; n<10000; ++n) {
