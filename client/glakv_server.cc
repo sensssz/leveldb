@@ -156,16 +156,16 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
         int PUT_LEN = strlen(PUT);
         int DEL_LEN = strlen(DEL);
         int QUIT_LEN = strlen(QUIT);
-        time_point<std::chrono::high_resolution_clock> start;
-        time_point<std::chrono::high_resolution_clock> end;
+        std::chrono::duration<double> diff;
         if (strncmp(GET, buffer, GET_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
             Slice key(buffer + GET_LEN + INT_LEN, klen);
             string val;
-            start = std::chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
             Status s = db->Get(ReadOptions(), key, &val);
-            end = std::chrono::high_resolution_clock::now();
+            auto end = std::chrono::high_resolution_clock::now();
+            diff = end - start;
             if (s.ok()) {
                 res[0] = 1;
                 store_uint64(res + 1, val.size());
@@ -186,9 +186,10 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
             char *val_buf = buffer + PUT_LEN + INT_LEN + klen + INT_LEN;
             Slice key(key_buf, klen);
             Slice val(val_buf, vlen);
-            start = std::chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
             Status s = db->Put(WriteOptions(), key, val);
-            end = std::chrono::high_resolution_clock::now();
+            auto end = std::chrono::high_resolution_clock::now();
+            diff = end - start;
             if (s.ok()) {
                 res[0] = 1;
                 res_len = 1;
@@ -201,9 +202,10 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
 //            assert(len == DEL_LEN + INT_LEN + klen);
             char *key_buf = buffer + strlen(DEL) + INT_LEN;
             Slice key(key_buf, klen);
-            start = std::chrono::high_resolution_clock::now();
+            auto start = std::chrono::high_resolution_clock::now();
             Status s = db->Delete(WriteOptions(), key);
-            end = std::chrono::high_resolution_clock::now();
+            auto end = std::chrono::high_resolution_clock::now();
+            diff = end - start;
             if (s.ok()) {
                 res[0] = 1;
                 res_len = 1;
@@ -218,7 +220,6 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
             cerr << "Error sending result to client" << endl;
             break;
         }
-        auto diff = end - start;
         lock.lock();
         latencies.push_back(diff.count());
         lock.unlock();
