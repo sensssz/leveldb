@@ -173,7 +173,7 @@ void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
         for (int count = 0; count < NUM_PREFETCH; ++count) {
             *id = (key_val + db_size / 3) % db_size;
             Slice key(key_buf, klen);
-            std::async(prefetch_kv, db, key);
+            thread t(prefetch, db, key);
         }
     }
 }
