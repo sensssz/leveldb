@@ -49,6 +49,8 @@ using leveldb::ReadOptions;
 using leveldb::WriteBatch;
 using leveldb::NewLRUCache;
 
+static int lambda = 5;
+
 static inline uint64_t *id_field(char *key, int klen) {
     return (uint64_t *) (key + (klen * sizeof(char) - sizeof(uint64_t)) / sizeof(char));
 }
@@ -173,7 +175,7 @@ void execute(uint64_t database_size, int num_exps) {
     std::random_device rd;
     std::mt19937 generator(rd());
     std::uniform_int_distribution<uint64_t> uni_dist(0, database_size - 1);
-    exponential_distribution exp_dist(5, database_size);
+    exponential_distribution exp_dist(lambda, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);
     uint64_t *id = id_field(key_buf, KEY_LEN);
@@ -216,6 +218,8 @@ void usage(ostream &os) {
     os << "-s       number of kv pairs in/to load into the database" << endl;
     os << "--client" << endl;
     os << "-c       number of concurrent clients" << endl;
+    os << "--lambda" << endl;
+    os << "-m       parameter for exponential distribution" << endl;
     os << "--num" << endl;
     os << "-n       number of operations each client does" << endl;
 }
@@ -228,6 +232,7 @@ int main(int argc, char *argv[]) {
             {"size",    required_argument, 0, 's'},
             {"client",  required_argument, 0, 'c'},
             {"num",     required_argument, 0, 'n'},
+            {"lambda",  required_argument, 0, 'm'},
             {0, 0, 0, 0}
     };
 
@@ -239,7 +244,7 @@ int main(int argc, char *argv[]) {
     uint64_t database_size = DB_SIZE;
     int num_clients = NUM_CLIENTS;
     int num_exps = NUM_EXP;
-    while ((c = getopt_long(argc, argv, "lehs:c:n:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "lehs:c:m:n:", long_options, &option_index)) != -1) {
         switch(c) {
             case 'l':
                 load_flag = 1;
@@ -256,6 +261,8 @@ int main(int argc, char *argv[]) {
             case 'c':
                 num_clients = atoi(optarg);
                 break;
+            case 'm':
+                lambda = atoi(optarg);
             case 'n':
                 num_exps = atoi(optarg);
                 break;

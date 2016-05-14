@@ -153,8 +153,8 @@ uint64_t get_unit64(char *buf) {
     return *((uint64_t *) buf);
 }
 
-static inline uint64_t *id_field(char *key, int klen) {
-    return (uint64_t *) (key + (klen * sizeof(char) - sizeof(uint64_t)) / sizeof(char));
+static inline uint64_t *id_field(char *key, uint64_t klen) {
+    return (uint64_t *) (key + klen - sizeof(uint64_t) / sizeof(char));
 }
 
 void prefetch_kv(DB* db, Slice key) {
@@ -164,7 +164,7 @@ void prefetch_kv(DB* db, Slice key) {
     }
 }
 
-void prefetch_for_key(DB *db, char *key_buf, int klen) {
+void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
     uint64_t *id = id_field(key_buf, klen);
     for (int count = 0; count < NUM_PREFETCH; ++count) {
         *id += 1;
@@ -189,10 +189,10 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
             cerr << "Error reading from client" << endl;
             break;
         }
-        int GET_LEN = strlen(GET);
-        int PUT_LEN = strlen(PUT);
-        int DEL_LEN = strlen(DEL);
-        int QUIT_LEN = strlen(QUIT);
+        size_t GET_LEN = strlen(GET);
+        size_t PUT_LEN = strlen(PUT);
+        size_t DEL_LEN = strlen(DEL);
+        size_t QUIT_LEN = strlen(QUIT);
         std::chrono::duration<double> diff;
         if (strncmp(GET, buffer, GET_LEN) == 0) {
             is_get = true;
