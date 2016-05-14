@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
             }
         }
         flags = fcntl(newsockfd, F_GETFL, 0);
-        fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
+        fcntl(newsockfd, F_SETFL, flags & ~O_NONBLOCK);
         thread t(serve_client, newsockfd, db);
         threads.push_back(std::move(t));
     }
