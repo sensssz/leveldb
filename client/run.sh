@@ -8,6 +8,8 @@ output_path=/home/jiamin/speculative/out
 
 exp_name="diff_c_p"
 
+trap 'quit=1' INT
+
 ssh salat3 "mkdir -p ${output_path}/"
 ssh salat3 "rm ${output_path}/${exp_name} && touch ${output_path}/${exp_name}"
 
@@ -15,6 +17,9 @@ for p in `seq 0 5`;
 do
     for((c=1;c<=128;c*=2))
     do
+        if [[ -z ${quit+x} ]]; then
+            exit 0
+        fi
         ssh salat3 /bin/zsh << EOF
         export LD_LIBRARY_PATH=/home/jiamin/gcc/lib64:/home/jiamin/usr/lib:$LD_LIBRARY_PATH
         echo "${p},${c}" >> ${output_path}/${exp_name}
