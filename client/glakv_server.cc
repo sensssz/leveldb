@@ -236,12 +236,13 @@ int main(int argc, char *argv[])
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
                            &clilen);
-        if (newsockfd == EAGAIN || newsockfd == EWOULDBLOCK) {
-            usleep(100);
-            continue;
-        } else if (newsockfd < 0) {
-            cout << newsockfd << "," << EAGAIN << "," << EWOULDBLOCK << endl;
-            error("ERROR on accept");
+        if (newsockfd < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                usleep(100);
+                continue;
+            } else {
+                error("ERROR on accept");
+            }
         }
         flags = fcntl(newsockfd, F_GETFL, 0);
         fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
