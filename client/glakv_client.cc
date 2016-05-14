@@ -181,7 +181,7 @@ void execute(uint64_t database_size, int num_exps) {
     for (int count = 0; count < num_exps; ++count) {
         *id = key;
         send_get(sockfd, key_buf, KEY_LEN);
-        if (count % 5 == 0) {
+        if (count % 10 == 0) {
             key = uni_dist(generator);
         } else {
             uint64_t next_rank = exp_dist.next();
