@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
                            &clilen);
-        if (newsockfd == EAGAIN) {
+        if (newsockfd == EAGAIN || newsockfd == EWOULDBLOCK) {
             usleep(100);
             continue;
         } else if (newsockfd < 0) {
