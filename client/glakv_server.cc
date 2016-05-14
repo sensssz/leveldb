@@ -50,6 +50,7 @@ static bool quit = false;
 static vector<thread> threads;
 
 void quit_server(int) {
+    cout << "Now should quit" << endl;
     quit = true;
 }
 
@@ -237,6 +238,9 @@ int main(int argc, char *argv[])
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
                            &clilen);
+        if (quit) {
+            break;
+        }
         if (newsockfd < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 usleep(100);
