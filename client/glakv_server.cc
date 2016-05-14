@@ -56,7 +56,7 @@ using leveldb::NewLRUCache;
 static bool quit = false;
 static bool prefetch = false;
 static vector<thread> threads;
-static atomic<int> num_threads = 0;
+static atomic<int> num_threads(0);
 static bool reported = true;
 
 void quit_server(int) {
