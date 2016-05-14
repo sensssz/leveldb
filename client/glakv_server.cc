@@ -14,7 +14,7 @@
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
-#define BUF_LEN 256
+#define BUF_LEN 512
 #define GET "Get"
 #define PUT "Put"
 #define DEL "Del"
@@ -148,7 +148,7 @@ void serve_client(int sockfd, DB *db) {
         int GET_LEN = strlen(GET);
         int PUT_LEN = strlen(PUT);
         int DEL_LEN = strlen(DEL);
-        if (strncmp(GET, buffer, GET_LEN)) {
+        if (strncmp(GET, buffer, GET_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + GET_LEN);
             assert(len == GET_LEN + INT_LEN + klen);
             Slice key(buffer + GET_LEN + INT_LEN, klen);
@@ -163,7 +163,7 @@ void serve_client(int sockfd, DB *db) {
                 res[0] = 0;
                 res_len = 1;
             }
-        } else if (strncmp(PUT, buffer, PUT_LEN)) {
+        } else if (strncmp(PUT, buffer, PUT_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + PUT_LEN);
             uint64_t vlen = get_unit64(buffer + PUT_LEN + INT_LEN + klen + INT_LEN);
             if (len != PUT_LEN + INT_LEN + klen + INT_LEN + vlen) {
@@ -182,7 +182,7 @@ void serve_client(int sockfd, DB *db) {
                 res[0] = 0;
                 res_len = 1;
             }
-        } else if (strncmp(DEL, buffer, DEL_LEN)) {
+        } else if (strncmp(DEL, buffer, DEL_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + DEL_LEN);
             assert(len == DEL_LEN + INT_LEN + klen);
             char *key_buf = buffer + strlen(DEL) + INT_LEN;
