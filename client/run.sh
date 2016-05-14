@@ -9,7 +9,7 @@ output_path=/home/jiamin/speculative/out
 exp_name="diff_c_p"
 
 ssh salat3 "mkdir -p ${output_path}/"
-ssh salat3 "touch ${output_path}/${exp_name}"
+ssh salat3 "rm ${output_path}/${exp_name} && touch ${output_path}/${exp_name}"
 
 for p in `seq 0 5`;
 do
@@ -20,6 +20,8 @@ do
         echo "${p},${c}" >> ${output_path}/${exp_name}
         ${db_path}/glakv_server --dir ${db_path}/glakv_home -p ${p} -n 1 >> ${output_path}/${exp_name}&
 EOF
+        sleep 2
         ${db_path}/glakv_client -e -s 1000000 -c ${c} -n 50000
+        sleep 1
     done
 done
