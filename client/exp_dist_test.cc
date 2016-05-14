@@ -16,9 +16,9 @@ using std::string;
 using std::unordered_map;
 
 int main(int argc, char *argv[]) {
-    int lambda = 5;
+    double lambda = 5;
     if (argc == 2) {
-        lambda = atoi(argv[1]);
+        lambda = atof(argv[1]);
     }
     unordered_map<uint64_t, uint64_t> map;
     exponential_distribution distribution(lambda, 100);
