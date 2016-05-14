@@ -96,10 +96,11 @@ static inline DB *db_open(string &dir, Cache *cache, bool create) {
     return db;
 }
 
-void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
+void parse_opts(int argc, char *argv[], int &help_flag, string &dir, int &num_exp) {
     struct option long_options[] = {
             {"help",    no_argument,       0, 'h'},
             {"prefetch",optional_argument, 0, 'p'},
+            {"num",     required_argument, 0, 'n'},
             {"dir",     required_argument, 0, 'd'},
             {0, 0, 0, 0}
     };
@@ -108,7 +109,7 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
     int option_index;
     help_flag = 0;
     dir = "glakv_home";
-    while ((c = getopt_long(argc, argv, "hp:d:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hn:p:d:", long_options, &option_index)) != -1) {
         switch(c) {
             case 'h':
                 help_flag = 1;
@@ -119,6 +120,8 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
                     num_prefetch = atoi(optarg);
                 }
                 break;
+            case 'n':
+                num_exp = atoi(optarg);
             case 'd':
                 dir = optarg;
                 break;
@@ -285,7 +288,8 @@ int main(int argc, char *argv[])
 
     int help_flag = 0;
     string dir;
-    parse_opts(argc, argv, help_flag, dir);
+    int num_exp = 0;
+    parse_opts(argc, argv, help_flag, dir, num_exp);
 
     if (help_flag) {
         usage(cout);
@@ -304,6 +308,7 @@ int main(int argc, char *argv[])
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
     vector<double> latencies;
     mutex lock;
+    int count = 0;
     while (!quit) {
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
@@ -318,6 +323,10 @@ int main(int argc, char *argv[])
                     cout << (sum / latencies.size()) << endl;
                     latencies.clear();
                     reported = true;
+                    ++count;
+                    if (count == num_exp) {
+                        break;
+                    }
                 }
                 usleep(100);
                 continue;
