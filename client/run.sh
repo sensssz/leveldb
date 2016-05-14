@@ -16,9 +16,9 @@ do
     for((c=1;c<=128;c*=2))
     do
         ssh salat3 /bin/zsh << EOF
-        export LD_LIBRARY_PATH=/home/jiamin/gcc/lib64:/home/jiamin/tmux/lib:/home/jiamin/usr/lib:/home/jiamin/mysql/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=/home/jiamin/gcc/lib64:/home/jiamin/usr/lib:$LD_LIBRARY_PATH
         echo "${p},${c}" >> ${output_path}/${exp_name}
-        ${db_path}/glakv_server -p ${p} -n 1 >> ${output_path}/${exp_name}&
+        ${db_path}/glakv_server --dir ${db_path}/glakv_home -p ${p} -n 1 >> ${output_path}/${exp_name}&
 EOF
         ${db_path}/glakv_client -e -s 1000000 -c ${c} -n 50000
     done
