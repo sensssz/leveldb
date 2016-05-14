@@ -105,7 +105,7 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
             case 'h':
                 help_flag = 1;
                 break;
-            case:
+            case 'p':
                 prefetch = true;
                 break;
             case 'd':
