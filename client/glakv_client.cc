@@ -19,7 +19,7 @@
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
-#define BUF_LEN     2048
+#define BUF_LEN     (VAL_LEN * 2)
 #define GET         "Get"
 #define PUT         "Put"
 #define DEL         "Del"
@@ -81,7 +81,6 @@ static int connect() {
     if (connect(sockfd, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
         error("ERROR connecting");
     }
-    cout << "Connection Established" << endl;
     return sockfd;
 }
 
@@ -176,18 +175,12 @@ void execute(int database_size, int num_exps) {
     bzero(key_buf, KEY_LEN);
     uint64_t *id = id_field(key_buf, KEY_LEN);
     uint64_t key = (uint64_t) (rand() % database_size);
-    auto start = std::chrono::high_resolution_clock::now();
     for (int count = 0; count < num_exps; ++count) {
         *id = key;
         send_get(sockfd, key_buf, KEY_LEN);
         uint64_t next_rank = exp_dist.next();
         key = (next_rank + key + database_size / 2) % database_size;
     }
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> diff = end-start;
-    cout << "Thread " << std::this_thread::get_id() << " finishes "
-         << num_exps << " operations in " << diff.count() << "s" << endl;
-    cout << "Avg latency: " << diff.count() / num_exps << endl;
     send_quit(sockfd);
     close(sockfd);
 }

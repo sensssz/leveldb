@@ -1,3 +1,4 @@
+#include "config.h"
 #include "exponential_distribution.h"
 
 #include <getopt.h>
@@ -10,13 +11,14 @@
 
 #include <iostream>
 #include <thread>
+#include <mutex>
 #include <chrono>
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 #include <fcntl.h>
 
-#define BUF_LEN     2048
+#define BUF_LEN     (VAL_LEN * 2)
 #define GET         "Get"
 #define PUT         "Put"
 #define DEL         "Del"
@@ -33,6 +35,7 @@ using std::min;
 using std::ostream;
 using std::rand;
 using std::string;
+using std::mutex;
 using std::thread;
 using std::uniform_int_distribution;
 using std::vector;
@@ -137,8 +140,7 @@ uint64_t get_unit64(char *buf) {
     return *((uint64_t *) buf);
 }
 
-void serve_client(int sockfd, DB *db) {
-    cout << "Connection established. Serving client." << endl;
+void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
     char buffer[BUF_LEN];
     char res[BUF_LEN];
     uint64_t res_len = 0;
@@ -153,12 +155,17 @@ void serve_client(int sockfd, DB *db) {
         int PUT_LEN = strlen(PUT);
         int DEL_LEN = strlen(DEL);
         int QUIT_LEN = strlen(QUIT);
+        auto start;
+        auto end;
+        auto diff;
         if (strncmp(GET, buffer, GET_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
             Slice key(buffer + GET_LEN + INT_LEN, klen);
             string val;
+            start = std::chrono::high_resolution_clock::now();
             Status s = db->Get(ReadOptions(), key, &val);
+            end = std::chrono::high_resolution_clock::now();
             if (s.ok()) {
                 res[0] = 1;
                 store_uint64(res + 1, val.size());
@@ -179,7 +186,9 @@ void serve_client(int sockfd, DB *db) {
             char *val_buf = buffer + PUT_LEN + INT_LEN + klen + INT_LEN;
             Slice key(key_buf, klen);
             Slice val(val_buf, vlen);
+            start = std::chrono::high_resolution_clock::now();
             Status s = db->Put(WriteOptions(), key, val);
+            end = std::chrono::high_resolution_clock::now();
             if (s.ok()) {
                 res[0] = 1;
                 res_len = 1;
@@ -192,7 +201,9 @@ void serve_client(int sockfd, DB *db) {
 //            assert(len == DEL_LEN + INT_LEN + klen);
             char *key_buf = buffer + strlen(DEL) + INT_LEN;
             Slice key(key_buf, klen);
+            start = std::chrono::high_resolution_clock::now();
             Status s = db->Delete(WriteOptions(), key);
+            end = std::chrono::high_resolution_clock::now();
             if (s.ok()) {
                 res[0] = 1;
                 res_len = 1;
@@ -203,12 +214,15 @@ void serve_client(int sockfd, DB *db) {
         } else if (strncmp(QUIT, buffer, QUIT_LEN) == 0) {
             break;
         }
+        diff = end - start;
+        lock.lock();
+        latencies.push_back(diff);
+        lock.unlock();
         if (write(sockfd, res, res_len) != res_len) {
             cerr << "Error sending result to client" << endl;
             break;
         }
     }
-    cout << "Client disconnected" << endl;
     close(sockfd);
 }
 
@@ -234,6 +248,9 @@ int main(int argc, char *argv[])
     clilen = sizeof(cli_addr);
     int flags = fcntl(sockfd, F_GETFL, 0);
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+    vector<double> latencies;
+    mutex lock;
+    auto start = std::chrono::high_resolution_clock::now();
     while (!quit) {
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
@@ -248,13 +265,23 @@ int main(int argc, char *argv[])
         }
         flags = fcntl(newsockfd, F_GETFL, 0);
         fcntl(newsockfd, F_SETFL, flags & ~O_NONBLOCK);
-        thread t(serve_client, newsockfd, db);
+        thread t(serve_client, newsockfd, db, latencies, lock);
         threads.push_back(std::move(t));
     }
 
     for (auto &t : threads) {
         t.join();
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto diff = end - start;
+
+    double sum = 0;
+    for (auto latency : latencies) {
+        sum += latency;
+    }
+
+    cout << "Mean latency: " << (sum / latencies.size()) << endl;
+    cout << "Throughput: " << latencies.size() / diff.count() << endl;
 
     close(sockfd);
     return 0;
