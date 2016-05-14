@@ -214,14 +214,14 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
         } else if (strncmp(QUIT, buffer, QUIT_LEN) == 0) {
             break;
         }
-        auto diff = end - start;
-        lock.lock();
-        latencies.push_back(diff.count());
-        lock.unlock();
         if (write(sockfd, res, res_len) != res_len) {
             cerr << "Error sending result to client" << endl;
             break;
         }
+        auto diff = end - start;
+        lock.lock();
+        latencies.push_back(diff.count());
+        lock.unlock();
     }
     close(sockfd);
 }
@@ -250,7 +250,6 @@ int main(int argc, char *argv[])
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
     vector<double> latencies;
     mutex lock;
-    auto start = std::chrono::high_resolution_clock::now();
     while (!quit) {
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
@@ -272,16 +271,14 @@ int main(int argc, char *argv[])
     for (auto &t : threads) {
         t.join();
     }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto diff = end - start;
 
     double sum = 0;
     for (auto latency : latencies) {
         sum += latency;
     }
 
+    cout << latencies.size() << " operations done" << endl;
     cout << "Mean latency: " << (sum / latencies.size()) << endl;
-    cout << "Throughput: " << latencies.size() / diff.count() << endl;
 
     close(sockfd);
     return 0;
