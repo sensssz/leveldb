@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     // how much time, in seconds, until the next one?
     std::exponential_distribution<> d(1.0);
 
-    std::map<int, int> hist;
+    std::map<uint64_t, uint64_t> hist;
     for(int n=0; n<10000; ++n) {
         ++hist[d(gen) / 0.0921034];
     }
