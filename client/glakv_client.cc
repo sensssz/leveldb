@@ -188,6 +188,8 @@ void execute(int database_size, int num_exps) {
     cout << "Thread " << std::this_thread::get_id() << " finishes "
          << num_exps << " operations in " << diff.count() << "s" << endl;
     cout << "Avg latency: " << diff.count() / num_exps << endl;
+    send_quit(sockfd);
+    close(sockfd);
 }
 
 void run(int num_threads, int database_size, int num_exps) {
