@@ -11,6 +11,8 @@
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 #define DB_SIZE     1000000
 #define NUM_CLIENTS 128
@@ -52,7 +54,7 @@ void error(const char *msg)
 }
 
 static int connect() {
-    int sockfd, portno;
+    int sockfd;
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
@@ -73,6 +75,7 @@ static int connect() {
     if (connect(sockfd, (struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
         error("ERROR connecting");
     }
+    cout << "Connection Established" << endl;
     return sockfd;
 }
 
@@ -107,13 +110,13 @@ Slice send_get(int sockfd, const char *key_buf, int klen) {
 void send_put(int sockfd, const char *key_buf, int klen, const char *val_buf, int vlen) {
     char cmd_buf[BUF_LEN];
     char res_buf[BUF_LEN];
-    int GET_LEN = strlen(PUT);
-    memcpy(cmd_buf, PUT, GET_LEN);
-    store_uint64(cmd_buf + GET_LEN, klen);
-    memcpy(cmd_buf + GET_LEN + INT_LEN, key_buf, klen);
-    store_uint64(cmd_buf + GET_LEN + INT_LEN + klen, vlen);
-    memcpy(cmd_buf + GET_LEN + INT_LEN + klen + INT_LEN, val_buf, vlen);
-    int len = GET_LEN + INT_LEN + klen + INT_LEN + vlen;
+    int PUT_LEN = strlen(PUT);
+    memcpy(cmd_buf, PUT, PUT_LEN);
+    store_uint64(cmd_buf + PUT_LEN, klen);
+    memcpy(cmd_buf + PUT_LEN + INT_LEN, key_buf, klen);
+    store_uint64(cmd_buf + PUT_LEN + INT_LEN + klen, vlen);
+    memcpy(cmd_buf + PUT_LEN + INT_LEN + klen + INT_LEN, val_buf, vlen);
+    int len = PUT_LEN + INT_LEN + klen + INT_LEN + vlen;
     if (write(sockfd, cmd_buf, len) != len) {
         error("ERROR sending command");
     }
@@ -131,9 +134,6 @@ void load_data(uint64_t db_size) {
     uint64_t *id = id_field(key_buf, KEY_LEN);
 
     // Load data into the database, one batch at a time
-    WriteBatch batch;
-    WriteOptions options;
-    options.sync = true;
     const uint64_t batch_size = db_size / 5;
     uint64_t count = 0;
     while (count < db_size) {
@@ -141,22 +141,13 @@ void load_data(uint64_t db_size) {
         for (uint64_t i = 0; i < num_writes; ++i, ++count) {
             char val_buf[VAL_LEN];
             *id = count;
-            Slice key(key_buf, KEY_LEN);
-            Slice val(val_buf, VAL_LEN);
-            batch.Put(key, val);
+            send_put(sockfd, key_buf, KEY_LEN, val_buf, VAL_LEN);
         }
-        Status status = db->Write(options, &batch);
-        if (!status.ok()) {
-            cerr << status.ToString() << endl;
-            break;
-        }
-        batch.Clear();
         uint64_t percentage_done = (count * 100) / db_size;
         string progress_bar(percentage_done, '.');
         cout << "Loading" << progress_bar << percentage_done << '%' << endl;
     }
     cout << "All kv pairs loaded into the database." << endl;
-    delete db;
 }
 
 /*
@@ -172,12 +163,10 @@ void execute(int database_size, int num_exps) {
     bzero(key_buf, KEY_LEN);
     uint64_t *id = id_field(key_buf, KEY_LEN);
     uint64_t key = (uint64_t) (rand() % database_size);
-    string val;
     auto start = std::chrono::high_resolution_clock::now();
     for (int count = 0; count < num_exps; ++count) {
         *id = key;
-        Slice key_slice(key_buf, KEY_LEN);
-        Slice val = send_get(sockfd, key_buf, KEY_LEN);
+        send_get(sockfd, key_buf, KEY_LEN);
         uint64_t next_rank = exp_dist.next();
         key = (next_rank + key + database_size / 2) % database_size;
     }
