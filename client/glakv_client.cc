@@ -49,7 +49,7 @@ using leveldb::ReadOptions;
 using leveldb::WriteBatch;
 using leveldb::NewLRUCache;
 
-static int lambda = 5;
+static int lambda = 1;
 
 static inline uint64_t *id_field(char *key, int klen) {
     return (uint64_t *) (key + (klen * sizeof(char) - sizeof(uint64_t)) / sizeof(char));
