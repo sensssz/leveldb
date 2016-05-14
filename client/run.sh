@@ -20,6 +20,6 @@ do
         echo "${p},${c}" >> ${output_path}/${exp_name}
         ${db_path}/glakv_server -p ${p} -n 1 >> ${output_path}/${exp_name}&
 EOF
-        ${db_path}/glakv_client -e -s 1000000 -c ${c} -n 100000
+        ${db_path}/glakv_client -e -s 1000000 -c ${c} -n 50000
     done
 done
