@@ -234,12 +234,15 @@ int main(int argc, char *argv[])
     clilen = sizeof(cli_addr);
     int flags = fcntl(sockfd, F_GETFL, 0);
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+    int count = 0;
     while (!quit) {
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
                            &clilen);
-        if (quit) {
-            break;
+        ++count;
+        if (count == 1000) {
+            cout << "quit is " << quit << endl;
+            count = 0;
         }
         if (newsockfd < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
