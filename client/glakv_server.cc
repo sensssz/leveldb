@@ -162,9 +162,7 @@ static inline uint64_t *id_field(const char *key, uint64_t klen) {
 
 void prefetch_kv(DB* db, Slice key) {
     string val;
-    Status status = db->Get(ReadOptions(), key, &val);
-    cout << "Prefetch for " << *(id_field(key.data(), key.size())) << " is done"
-         << ", status is " << status.ToString() << endl;
+    db->Get(ReadOptions(), key, &val);
 }
 
 void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
