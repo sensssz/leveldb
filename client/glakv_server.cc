@@ -52,6 +52,7 @@ using leveldb::NewLRUCache;
 
 static bool quit = false;
 static vector<thread> threads;
+static mutex lock;
 
 void quit_server(int) {
     cout << "Receives CTRL-C, quiting..." << endl;
@@ -141,7 +142,7 @@ uint64_t get_unit64(char *buf) {
     return *((uint64_t *) buf);
 }
 
-void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
+void serve_client(int sockfd, DB *db, vector<double> &latencies) {
     char buffer[BUF_LEN];
     char res[BUF_LEN];
     uint64_t res_len = 0;
@@ -265,7 +266,7 @@ int main(int argc, char *argv[])
         }
         flags = fcntl(newsockfd, F_GETFL, 0);
         fcntl(newsockfd, F_SETFL, flags & ~O_NONBLOCK);
-        thread t(serve_client, newsockfd, db, latencies, lock);
+        thread t(serve_client, newsockfd, db, latencies);
         threads.push_back(std::move(t));
     }
 
