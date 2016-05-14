@@ -240,6 +240,7 @@ int main(int argc, char *argv[])
             usleep(100);
             continue;
         } else if (newsockfd < 0) {
+            cout << newsockfd << "," << EAGAIN << "," << EWOULDBLOCK << endl;
             error("ERROR on accept");
         }
         flags = fcntl(newsockfd, F_GETFL, 0);
