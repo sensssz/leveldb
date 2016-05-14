@@ -37,6 +37,7 @@ using std::rand;
 using std::string;
 using std::mutex;
 using std::thread;
+using std::chrono::time_point;
 using std::uniform_int_distribution;
 using std::vector;
 using leveldb::Cache;
@@ -155,9 +156,8 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
         int PUT_LEN = strlen(PUT);
         int DEL_LEN = strlen(DEL);
         int QUIT_LEN = strlen(QUIT);
-        auto start;
-        auto end;
-        auto diff;
+        time_point<std::chrono::high_resolution_clock> start;
+        time_point<std::chrono::high_resolution_clock> end;
         if (strncmp(GET, buffer, GET_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
@@ -214,9 +214,9 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
         } else if (strncmp(QUIT, buffer, QUIT_LEN) == 0) {
             break;
         }
-        diff = end - start;
+        auto diff = end - start;
         lock.lock();
-        latencies.push_back(diff);
+        latencies.push_back(diff.count());
         lock.unlock();
         if (write(sockfd, res, res_len) != res_len) {
             cerr << "Error sending result to client" << endl;
