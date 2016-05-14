@@ -170,6 +170,9 @@ void load_data(uint64_t db_size) {
  */
 void execute(int database_size, int num_exps) {
     int sockfd = connect();
+    std::random_device rd;
+    std::mt19937 generator(rd());
+    std::uniform_int_distribution<uint64_t> uni_dist(0, database_size);
     exponential_distribution exp_dist(5, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);
@@ -178,8 +181,12 @@ void execute(int database_size, int num_exps) {
     for (int count = 0; count < num_exps; ++count) {
         *id = key;
         send_get(sockfd, key_buf, KEY_LEN);
-        uint64_t next_rank = exp_dist.next();
-        key = (next_rank + key + database_size / 2) % database_size;
+        if (count % 5 == 0) {
+            key = uni_dist(generator);
+        } else {
+            uint64_t next_rank = exp_dist.next();
+            key = (next_rank + key + database_size / 3) % database_size;
+        }
     }
     send_quit(sockfd);
     close(sockfd);
