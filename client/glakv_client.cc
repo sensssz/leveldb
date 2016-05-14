@@ -19,7 +19,7 @@
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
-#define BUF_LEN     512
+#define BUF_LEN     2048
 #define GET         "Get"
 #define PUT         "Put"
 #define DEL         "Del"
