@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <iomanip>
 
 using std::cout;
 using std::endl;
@@ -26,9 +27,27 @@ int main(int argc, char *argv[]) {
         map[val]++;
     }
 
-    for (int count = 0; count < 100; ++count) {
-        string val(map[count] / 200, '*');
-        cout << count << ": " << val << endl;
+//    for (int count = 0; count < 100; ++count) {
+//        string val(map[count] / 200, '*');
+//        cout << count << ": " << val << endl;
+//    }
+
+    std::random_device rd;
+    std::mt19937 gen;
+    gen.seed(rd());
+
+    // if particles decay once per second on average,
+    // how much time, in seconds, until the next one?
+    std::exponential_distribution<> d(1);
+
+    std::unordered_map<int, int> hist;
+    for(int n=0; n<10000; ++n) {
+        ++hist[2*d(gen)];
+    }
+    for(auto p : hist) {
+        std::cout << std::fixed << std::setprecision(1)
+        << p.first/2.0 << '-' << (p.first+1)/2.0 <<
+        ' ' << std::string(p.second/200, '*') << '\n';
     }
 
     return 0;
