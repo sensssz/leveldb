@@ -58,6 +58,9 @@ static bool prefetch = false;
 static vector<thread> threads;
 static atomic<int> num_threads(0);
 static bool reported = true;
+static uint64_t db_size = 0;
+
+void count_kvs(DB *db);
 
 void quit_server(int) {
     cout << "Receives CTRL-C, quiting..." << endl;
@@ -166,8 +169,9 @@ void prefetch_kv(DB* db, Slice key) {
 
 void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
     uint64_t *id = id_field(key_buf, klen);
+    uint64_t key_val = *id;
     for (int count = 0; count < NUM_PREFETCH; ++count) {
-        *id += 1;
+        *id = (key_val + db_size / 3) % db_size;
         Slice key(key_buf, klen);
         std::async(prefetch_kv, db, key);
     }
@@ -284,6 +288,7 @@ int main(int argc, char *argv[])
     }
 
     DB *db = db_open(dir, nullptr, true);
+    count_kvs(db);
     int sockfd = setup_server();
     int newsockfd;
     socklen_t clilen;
@@ -329,4 +334,13 @@ int main(int argc, char *argv[])
     close(sockfd);
     delete db;
     return 0;
+}
+
+void count_kvs(DB *db) {
+    ReadOptions options;
+    options.fill_cache = false;
+    auto iter = db->NewIterator(options);
+    for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
+        ++db_size;
+    }
 }
