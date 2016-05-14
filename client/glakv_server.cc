@@ -337,10 +337,12 @@ int main(int argc, char *argv[])
 }
 
 void count_kvs(DB *db) {
+    cout << "Counting database..." << endl;
     ReadOptions options;
     options.fill_cache = false;
     auto iter = db->NewIterator(options);
     for (iter->SeekToFirst(); iter->Valid(); iter->Next()) {
         ++db_size;
     }
+    cout << db_size << " kv pairs in total" << endl;
 }
