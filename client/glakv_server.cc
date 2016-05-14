@@ -125,7 +125,16 @@ int setup_server() {
     return sockfd;
 }
 
+void store_uint64(char *buf, uint64_t val) {
+    *((uint64_t *) buf) = val;
+}
+
+uint64_t get_unit64(char *buf) {
+    return *((uint64_t *) buf);
+}
+
 void serve_client(int sockfd, DB *db) {
+    cout << "Connection established. Serving client." << endl;
     char buffer[BUF_LEN];
     char res[BUF_LEN];
     uint64_t res_len = 0;
@@ -136,28 +145,33 @@ void serve_client(int sockfd, DB *db) {
             cerr << "Error reading from client" << endl;
             break;
         }
-        if (strncmp(GET, buffer, strlen(GET))) {
-            uint64_t klen = *((uint64_t *) (buffer + strlen(GET)));
-            assert(len == strlen(GET) + INT_LEN + klen);
-            char *key_buf = buffer + strlen(GET) + INT_LEN;
-            Slice key(key_buf, klen);
+        int GET_LEN = strlen(GET);
+        int PUT_LEN = strlen(PUT);
+        int DEL_LEN = strlen(DEL);
+        if (strncmp(GET, buffer, GET_LEN)) {
+            uint64_t klen = get_unit64(buffer + GET_LEN);
+            assert(len == GET_LEN + INT_LEN + klen);
+            Slice key(buffer + GET_LEN + INT_LEN, klen);
             string val;
             Status s = db->Get(ReadOptions(), key, &val);
             if (s.ok()) {
                 res[0] = 1;
-                *((uint64_t *) (res + 1)) = val.size();
+                store_uint64(res + 1, val.size());
                 memcpy(res + 1 + INT_LEN, val.c_str(), val.size());
                 res_len = 1 + INT_LEN + val.size();
             } else {
                 res[0] = 0;
                 res_len = 1;
             }
-        } else if (strncmp(PUT, buffer, strlen(PUT))) {
-            uint64_t klen = *((uint64_t *) (buffer + strlen(PUT)));
-            uint64_t vlen = *((uint64_t *) (buffer + strlen(PUT) + INT_LEN + klen + INT_LEN));
-            assert(len == strlen(PUT) + INT_LEN + klen + INT_LEN + vlen);
-            char *key_buf = buffer + strlen(PUT) + INT_LEN;
-            char *val_buf = buffer + strlen(PUT) + INT_LEN + klen + INT_LEN;
+        } else if (strncmp(PUT, buffer, PUT_LEN)) {
+            uint64_t klen = get_unit64(buffer + PUT_LEN);
+            uint64_t vlen = get_unit64(buffer + PUT_LEN + INT_LEN + klen + INT_LEN);
+            if (len != PUT_LEN + INT_LEN + klen + INT_LEN + vlen) {
+                cout << len << "," << PUT_LEN + INT_LEN + klen + INT_LEN + vlen << endl;
+            }
+            assert(len == PUT_LEN + INT_LEN + klen + INT_LEN + vlen);
+            char *key_buf = buffer + PUT_LEN + INT_LEN;
+            char *val_buf = buffer + PUT_LEN + INT_LEN + klen + INT_LEN;
             Slice key(key_buf, klen);
             Slice val(val_buf, vlen);
             Status s = db->Put(WriteOptions(), key, val);
@@ -168,9 +182,9 @@ void serve_client(int sockfd, DB *db) {
                 res[0] = 0;
                 res_len = 1;
             }
-        } else if (strncmp(DEL, buffer, strlen(DEL))) {
-            uint64_t klen = *((uint64_t *) (buffer + strlen(DEL)));
-            assert(len == strlen(DEL) + INT_LEN + klen);
+        } else if (strncmp(DEL, buffer, DEL_LEN)) {
+            uint64_t klen = get_unit64(buffer + DEL_LEN);
+            assert(len == DEL_LEN + INT_LEN + klen);
             char *key_buf = buffer + strlen(DEL) + INT_LEN;
             Slice key(key_buf, klen);
             Status s = db->Delete(WriteOptions(), key);

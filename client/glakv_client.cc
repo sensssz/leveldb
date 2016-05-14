@@ -22,7 +22,7 @@
 #define DB_SIZE     1000000
 #define NUM_CLIENTS 128
 #define NUM_EXP     100000
-#define BUF_LEN     256
+#define BUF_LEN     512
 #define INT_LEN     (sizeof(uint64_t) / sizeof(char))
 #define GET "Get"
 #define PUT "Put"
@@ -118,6 +118,7 @@ void send_put(int sockfd, const char *key_buf, int klen, const char *val_buf, in
     int PUT_LEN = strlen(PUT);
     memcpy(cmd_buf, PUT, PUT_LEN);
     store_uint64(cmd_buf + PUT_LEN, klen);
+    assert(get_unit64(cmd_buf + PUT_LEN) == klen);
     memcpy(cmd_buf + PUT_LEN + INT_LEN, key_buf, klen);
     store_uint64(cmd_buf + PUT_LEN + INT_LEN + klen, vlen);
     memcpy(cmd_buf + PUT_LEN + INT_LEN + klen + INT_LEN, val_buf, vlen);
