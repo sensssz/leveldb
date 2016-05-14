@@ -28,10 +28,10 @@ int main(int argc, char *argv[]) {
         map[val]++;
     }
 
-//    for (int count = 0; count < 100; ++count) {
-//        string val(map[count] / 200, '*');
-//        cout << count << ": " << val << endl;
-//    }
+    for (int count = 0; count < 100; ++count) {
+        string val(map[count] / 100, '*');
+        cout << count << ": " << val << endl;
+    }
 
     std::random_device rd;
     std::mt19937 gen;
