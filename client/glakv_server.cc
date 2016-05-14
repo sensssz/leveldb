@@ -13,6 +13,7 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <future>
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
@@ -52,6 +53,7 @@ using leveldb::NewLRUCache;
 
 static bool quit = false;
 static vector<thread> threads;
+static bool prefetch = false;
 
 void quit_server(int) {
     cout << "Receives CTRL-C, quiting..." << endl;
@@ -89,6 +91,7 @@ static inline DB *db_open(string &dir, Cache *cache, bool create) {
 void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
     struct option long_options[] = {
             {"help",    no_argument,       0, 'h'},
+            {"prefetch",no_argument,       0, 'p'},
             {"dir",     required_argument, 0, 'd'},
             {0, 0, 0, 0}
     };
@@ -97,10 +100,13 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
     int option_index;
     help_flag = 0;
     dir = "glakv_home";
-    while ((c = getopt_long(argc, argv, "hd:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hpd:", long_options, &option_index)) != -1) {
         switch(c) {
             case 'h':
                 help_flag = 1;
+                break;
+            case:
+                prefetch = true;
                 break;
             case 'd':
                 dir = optarg;
@@ -141,12 +147,34 @@ uint64_t get_unit64(char *buf) {
     return *((uint64_t *) buf);
 }
 
+static inline uint64_t *id_field(char *key, int klen) {
+    return (uint64_t *) (key + (klen * sizeof(char) - sizeof(uint64_t)) / sizeof(char));
+}
+
+void prefetch_for_key(DB *db, char *key_buf, int klen) {
+    uint64_t *id = id_field(key_buf, klen);
+    for (int count = 0; count < NUM_PREFETCH; ++count) {
+        *id += 1;
+        Slice key(key_buf, klen);
+        std::async(prefetch_kv, db, key);
+    }
+}
+
+void prefetch_kv(DB* db, Slice key) {
+    string val;
+    db->Get(ReadOptions(), key, &val);
+}
+
 void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
     char buffer[BUF_LEN];
     char res[BUF_LEN];
     uint64_t res_len = 0;
     ssize_t len = 0;
+    bool is_get = false;
+    char *key_buf;
+    uint64_t klen;
     while (!quit) {
+        is_get = false;
         bzero(buffer, BUF_LEN);
         if ((len = read(sockfd, buffer, BUF_LEN)) < 0) {
             cerr << "Error reading from client" << endl;
@@ -158,9 +186,11 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
         int QUIT_LEN = strlen(QUIT);
         std::chrono::duration<double> diff;
         if (strncmp(GET, buffer, GET_LEN) == 0) {
-            uint64_t klen = get_unit64(buffer + GET_LEN);
+            is_get = true;
+            klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
-            Slice key(buffer + GET_LEN + INT_LEN, klen);
+            key_buf = buffer + GET_LEN + INT_LEN;
+            Slice key(key_buf, klen);
             string val;
             auto start = std::chrono::high_resolution_clock::now();
             Status s = db->Get(ReadOptions(), key, &val);
@@ -176,7 +206,7 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
                 res_len = 1;
             }
         } else if (strncmp(PUT, buffer, PUT_LEN) == 0) {
-            uint64_t klen = get_unit64(buffer + PUT_LEN);
+            klen = get_unit64(buffer + PUT_LEN);
             uint64_t vlen = get_unit64(buffer + PUT_LEN + INT_LEN + klen);
             if (len != PUT_LEN + INT_LEN + klen + INT_LEN + vlen) {
                 cout << len << "," << PUT_LEN + INT_LEN + klen + INT_LEN + vlen << endl;
@@ -198,7 +228,7 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
                 res_len = 1;
             }
         } else if (strncmp(DEL, buffer, DEL_LEN) == 0) {
-            uint64_t klen = get_unit64(buffer + DEL_LEN);
+            klen = get_unit64(buffer + DEL_LEN);
 //            assert(len == DEL_LEN + INT_LEN + klen);
             char *key_buf = buffer + strlen(DEL) + INT_LEN;
             Slice key(key_buf, klen);
@@ -215,6 +245,9 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
             }
         } else if (strncmp(QUIT, buffer, QUIT_LEN) == 0) {
             break;
+        }
+        if (is_get) {
+            prefetch_for_key(db, key_buf, klen);
         }
         if (write(sockfd, res, res_len) != res_len) {
             cerr << "Error sending result to client" << endl;
@@ -277,7 +310,6 @@ int main(int argc, char *argv[])
     for (auto latency : latencies) {
         sum += latency;
     }
-    cout << "Sum is " << sum << endl;
 
     cout << latencies.size() << " operations done" << endl;
     cout << "Mean latency: " << (sum / latencies.size()) << endl;
