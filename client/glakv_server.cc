@@ -9,6 +9,7 @@
 #include <netdb.h>
 #include <signal.h>
 
+#include <atomic>
 #include <iostream>
 #include <thread>
 #include <mutex>
@@ -29,6 +30,7 @@
 #define NUM_EXP     100000
 #define INT_LEN     (sizeof(uint64_t) / sizeof(char))
 
+using std::atomic;
 using std::cerr;
 using std::cout;
 using std::endl;
@@ -52,8 +54,10 @@ using leveldb::WriteBatch;
 using leveldb::NewLRUCache;
 
 static bool quit = false;
-static vector<thread> threads;
 static bool prefetch = false;
+static vector<thread> threads;
+static atomic<int> num_threads = 0;
+static bool reported = true;
 
 void quit_server(int) {
     cout << "Receives CTRL-C, quiting..." << endl;
@@ -154,8 +158,10 @@ static inline uint64_t *id_field(char *key, int klen) {
 }
 
 void prefetch_kv(DB* db, Slice key) {
-    string val;
-    db->Get(ReadOptions(), key, &val);
+    if (prefetch) {
+        string val;
+        db->Get(ReadOptions(), key, &val);
+    }
 }
 
 void prefetch_for_key(DB *db, char *key_buf, int klen) {
@@ -168,6 +174,7 @@ void prefetch_for_key(DB *db, char *key_buf, int klen) {
 }
 
 void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
+    reported = false;
     char buffer[BUF_LEN];
     char res[BUF_LEN];
     uint64_t res_len = 0;
@@ -259,6 +266,7 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
         latencies.push_back(diff.count());
         lock.unlock();
     }
+    --num_threads;
     close(sockfd);
 }
 
@@ -292,6 +300,15 @@ int main(int argc, char *argv[])
                            &clilen);
         if (newsockfd < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                if (num_threads == 0 && !reported) {
+                    double sum = 0;
+                    for (auto latency : latencies) {
+                        sum += latency;
+                    }
+                    cout << latencies.size() << " operations done" << endl;
+                    cout << "Mean latency: " << (sum / latencies.size()) << endl;
+                    latencies.clear();
+                }
                 usleep(100);
                 continue;
             } else {
@@ -302,19 +319,12 @@ int main(int argc, char *argv[])
         fcntl(newsockfd, F_SETFL, flags & ~O_NONBLOCK);
         thread t(serve_client, newsockfd, db, std::ref(latencies), std::ref(lock));
         threads.push_back(std::move(t));
+        ++num_threads;
     }
 
     for (auto &t : threads) {
         t.join();
     }
-
-    double sum = 0;
-    for (auto latency : latencies) {
-        sum += latency;
-    }
-
-    cout << latencies.size() << " operations done" << endl;
-    cout << "Mean latency: " << (sum / latencies.size()) << endl;
 
     close(sockfd);
     return 0;
