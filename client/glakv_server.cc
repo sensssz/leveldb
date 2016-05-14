@@ -156,13 +156,14 @@ uint64_t get_unit64(char *buf) {
     return *((uint64_t *) buf);
 }
 
-static inline uint64_t *id_field(char *key, uint64_t klen) {
+static inline uint64_t *id_field(const char *key, uint64_t klen) {
     return (uint64_t *) (key + klen - sizeof(uint64_t) / sizeof(char));
 }
 
 void prefetch_kv(DB* db, Slice key) {
     string val;
     db->Get(ReadOptions(), key, &val);
+    cout << "Prefetch for " << *(id_field(key.data(), key.size())) << " is done" << endl;
 }
 
 void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
@@ -203,6 +204,7 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
             klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
             key_buf = buffer + GET_LEN + INT_LEN;
+            cout << "GET: " << (id_field(key_buf, klen)) << endl;
             Slice key(key_buf, klen);
             string val;
             auto start = std::chrono::high_resolution_clock::now();
