@@ -123,7 +123,7 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
 int setup_server() {
     int sockfd, portno;
     struct sockaddr_in serv_addr;
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM | SO_REUSEADDR | SO_REUSEPORT, 0);
     if (sockfd < 0) {
         error("ERROR opening socket");
     }
