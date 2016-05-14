@@ -6,8 +6,8 @@ output_path=/home/jiamin/speculative/out
 
 exp_name="diff_c_p"
 
-mkdir -p ${output_path}/
-touch ${output_path}/${exp_name}
+ssh salat3 "mkdir -p ${output_path}/"
+ssh salat3 "touch ${output_path}/${exp_name}"
 
 for p in `seq 0 5`;
 do
