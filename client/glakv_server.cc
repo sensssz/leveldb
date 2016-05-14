@@ -204,7 +204,6 @@ void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
             klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
             key_buf = buffer + GET_LEN + INT_LEN;
-            cout << "GET: " << *(id_field(key_buf, klen)) << endl;
             Slice key(key_buf, klen);
             string val;
             auto start = std::chrono::high_resolution_clock::now();
