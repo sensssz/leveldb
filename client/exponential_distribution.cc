@@ -20,6 +20,7 @@ exponential_distribution::exponential_distribution(double lambda_in, uint64_t si
     generator.seed(rd());
     max_val = PRECISION / lambda * LN10;
     interval_size = max_val / size;
+    cout << "max val is " << max_val << endl;
     cout << "interval size is " << interval_size << endl;
 }
 
