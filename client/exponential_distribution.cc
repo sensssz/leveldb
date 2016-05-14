@@ -4,6 +4,11 @@
 
 #include "exponential_distribution.h"
 
+#include <iostream>
+
+using std::cout;
+using std::endl;
+
 using std::ceil;
 
 static const double LN10 = 2.30258509299;
@@ -15,6 +20,7 @@ exponential_distribution::exponential_distribution(double lambda_in, uint64_t si
     generator.seed(rd());
     max_val = PRECISION / lambda * LN10;
     interval_size = max_val / size;
+    cout << "interval size is " << interval_size << endl;
 }
 
 uint64_t exponential_distribution::next() {

@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
     }
 
     for (int count = 0; count < 100; ++count) {
-        string val(map[count], '*');
+        string val(map[count] / 200, '*');
         cout << count << ": " << val << endl;
     }
 
