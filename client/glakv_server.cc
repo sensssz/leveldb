@@ -122,6 +122,7 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir, int &num_ex
                 break;
             case 'n':
                 num_exp = atoi(optarg);
+                break;
             case 'd':
                 dir = optarg;
                 break;
