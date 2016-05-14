@@ -4,13 +4,17 @@ INCLUDE = -I$(CUSTOM_USR)/include -I$(ROOT)/include
 LIBS = -lleveldb -lsnappy
 LDFLAGS = -L$(CUSTOM_USR)/lib $(LIBS)
 CXXFLAGS = -std=c++11 -c -O3 -g $(INCLUDE)
-OBJS = glakv_client.o glakv_server.o exponential_distribution.o
+OBJS = glakv.o glakv_client.o glakv_server.o exponential_distribution.o
 
 all: exec
 
 exec: $(OBJS)
 	$(CC) $(LDFLAGS) glakv_server.o -o glakv_server
 	$(CC) $(LDFLAGS) glakv_client.o exponential_distribution.o -o glakv_client
+	$(CC) $(LDFLAGS) glakv.o exponential_distribution.o -o glakv
+
+glakv.o: glakv.cc config.h
+	$(CC) $(CXXFLAGS) glakv.cc -o glakv.o
 
 glakv_client.o: glakv_client.cc config.h
 	$(CC) $(CXXFLAGS) glakv_client.cc -o glakv_client.o

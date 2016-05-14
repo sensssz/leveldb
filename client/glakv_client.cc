@@ -168,11 +168,11 @@ void load_data(uint64_t db_size) {
  * an exponential distribution, where key + 1 has the highest
  * possibility, key + 2 has the second highest possibility, etc.
  */
-void execute(int database_size, int num_exps) {
+void execute(uint64_t database_size, int num_exps) {
     int sockfd = connect();
     std::random_device rd;
     std::mt19937 generator(rd());
-    std::uniform_int_distribution<uint64_t> uni_dist(0, database_size);
+    std::uniform_int_distribution<uint64_t> uni_dist(0, database_size - 1);
     exponential_distribution exp_dist(5, database_size);
     char key_buf[KEY_LEN];
     bzero(key_buf, KEY_LEN);
@@ -192,7 +192,7 @@ void execute(int database_size, int num_exps) {
     close(sockfd);
 }
 
-void run(int num_threads, int database_size, int num_exps) {
+void run(int num_threads, uint64_t database_size, int num_exps) {
     vector<thread> threads;
     for (int count = 0; count < num_threads; ++count) {
         thread t(execute, database_size, num_exps);

@@ -12,12 +12,12 @@ private:
     std::exponential_distribution<> dist;
     std::mt19937 generator;
     double lambda;
-    int size;
+    uint64_t size;
     double max_val;
     double interval_size;
 
 public:
-    exponential_distribution(double lambda_in, int size_in);
+    exponential_distribution(double lambda_in, uint64_t size_in);
 
     uint64_t next();
 };
