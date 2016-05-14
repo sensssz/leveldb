@@ -13,6 +13,7 @@
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
+#include <fcntl.h>
 
 #define BUF_LEN     512
 #define GET         "Get"
@@ -226,15 +227,22 @@ int main(int argc, char *argv[])
     int newsockfd;
     socklen_t clilen;
     struct sockaddr_in cli_addr;
+    listen(sockfd, 5);
+    clilen = sizeof(cli_addr);
+    int flags = fcntl(sockfd, F_GETFL, 0);
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
     while (!quit) {
-        listen(sockfd, 5);
-        clilen = sizeof(cli_addr);
         newsockfd = accept(sockfd,
                            (struct sockaddr *) &cli_addr,
                            &clilen);
-        if (newsockfd < 0) {
+        if (newsockfd == EAGAIN) {
+            std::this_thread::sleep_for(1000000);
+            continue;
+        } else if (newsockfd < 0) {
             error("ERROR on accept");
         }
+        flags = fcntl(newsockfd, F_GETFL, 0);
+        fcntl(sockfd, F_SETFL, flags & ~O_NONBLOCK);
         thread t(serve_client, newsockfd, db);
         threads.push_back(std::move(t));
     }
