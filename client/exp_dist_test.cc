@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     for(auto p : hist) {
         std::cout << std::fixed << std::setprecision(1)
         << p.first/3.0 << '-' << (p.first+1)/3.0 <<
-        ' ' << std::string(p.second/300, '*') << '\n';
+        ' ' << std::string(p.second/100, '*') << '\n';
     }
 
     return 0;
