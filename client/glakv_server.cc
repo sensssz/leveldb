@@ -151,6 +151,11 @@ static inline uint64_t *id_field(char *key, int klen) {
     return (uint64_t *) (key + (klen * sizeof(char) - sizeof(uint64_t)) / sizeof(char));
 }
 
+void prefetch_kv(DB* db, Slice key) {
+    string val;
+    db->Get(ReadOptions(), key, &val);
+}
+
 void prefetch_for_key(DB *db, char *key_buf, int klen) {
     uint64_t *id = id_field(key_buf, klen);
     for (int count = 0; count < NUM_PREFETCH; ++count) {
@@ -158,11 +163,6 @@ void prefetch_for_key(DB *db, char *key_buf, int klen) {
         Slice key(key_buf, klen);
         std::async(prefetch_kv, db, key);
     }
-}
-
-void prefetch_kv(DB* db, Slice key) {
-    string val;
-    db->Get(ReadOptions(), key, &val);
 }
 
 void serve_client(int sockfd, DB *db, vector<double> &latencies, mutex &lock) {
