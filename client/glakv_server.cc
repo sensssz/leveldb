@@ -328,5 +328,6 @@ int main(int argc, char *argv[])
     }
 
     close(sockfd);
+    delete db;
     return 0;
 }
