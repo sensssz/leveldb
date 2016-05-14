@@ -43,12 +43,12 @@ int main(int argc, char *argv[]) {
 
     std::map<int, int> hist;
     for(int n=0; n<10000; ++n) {
-        ++hist[2*d(gen)];
+        ++hist[3*d(gen)];
     }
     for(auto p : hist) {
         std::cout << std::fixed << std::setprecision(1)
-        << p.first/2.0 << '-' << (p.first+1)/2.0 <<
-        ' ' << std::string(p.second/200, '*') << '\n';
+        << p.first/3.0 << '-' << (p.first+1)/3.0 <<
+        ' ' << std::string(p.second/300, '*') << '\n';
     }
 
     return 0;
