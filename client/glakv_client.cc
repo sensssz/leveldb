@@ -6,13 +6,14 @@
 #include "exponential_distribution.h"
 
 #include <getopt.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #include <iostream>
 #include <thread>
 #include <leveldb/cache.h>
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
 #define DB_SIZE     1000000
 #define NUM_CLIENTS 128
