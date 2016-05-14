@@ -11,3 +11,5 @@ leveldbutil
 CMakeLists.txt
 client/glakv
 client/glakv_home
+client/glakv_client
+client/glakv_server
