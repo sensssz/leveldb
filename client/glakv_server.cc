@@ -55,6 +55,7 @@ using leveldb::NewLRUCache;
 
 static bool quit = false;
 static bool prefetch = false;
+static int num_prefetch = NUM_PREFETCH;
 static vector<thread> threads;
 static atomic<int> num_threads(0);
 static bool reported = true;
@@ -63,7 +64,7 @@ static uint64_t db_size = 0;
 void count_kvs(DB *db);
 
 void quit_server(int) {
-    cout << "Receives CTRL-C, quiting..." << endl;
+    cout << endl << "Receives CTRL-C, quiting..." << endl;
     quit = true;
 }
 
@@ -98,7 +99,7 @@ static inline DB *db_open(string &dir, Cache *cache, bool create) {
 void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
     struct option long_options[] = {
             {"help",    no_argument,       0, 'h'},
-            {"prefetch",no_argument,       0, 'p'},
+            {"prefetch",optional_argument, 0, 'p'},
             {"dir",     required_argument, 0, 'd'},
             {0, 0, 0, 0}
     };
@@ -107,13 +108,16 @@ void parse_opts(int argc, char *argv[], int &help_flag, string &dir) {
     int option_index;
     help_flag = 0;
     dir = "glakv_home";
-    while ((c = getopt_long(argc, argv, "hpd:", long_options, &option_index)) != -1) {
+    while ((c = getopt_long(argc, argv, "hp:d:", long_options, &option_index)) != -1) {
         switch(c) {
             case 'h':
                 help_flag = 1;
                 break;
             case 'p':
                 prefetch = true;
+                if (optarg) {
+                    num_prefetch = atoi(optarg);
+                }
                 break;
             case 'd':
                 dir = optarg;
@@ -169,7 +173,7 @@ void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
     if (prefetch) {
         uint64_t *id = id_field(key_buf, klen);
         uint64_t key_val = *id;
-        for (int count = 0; count < NUM_PREFETCH; ++count) {
+        for (int count = 0; count < num_prefetch; ++count) {
             *id = (key_val + db_size / 3) % db_size;
             Slice key(key_buf, klen);
             thread t(prefetch_kv, db, key);
