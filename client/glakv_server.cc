@@ -207,6 +207,7 @@ void serve_client(int sockfd, DB *db) {
             break;
         }
     }
+    cout << "Client disconnected" << endl;
     close(sockfd);
 }
 
@@ -251,6 +252,7 @@ int main(int argc, char *argv[])
     }
 
     for (auto &t : threads) {
+        cout << "Waiting for thread " << t.get_id() << endl;
         t.join();
     }
 
