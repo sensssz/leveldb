@@ -33,23 +33,5 @@ int main(int argc, char *argv[]) {
         cout << count << ": " << val << endl;
     }
 
-    std::random_device rd;
-    std::mt19937 gen;
-    gen.seed(rd());
-
-    // if particles decay once per second on average,
-    // how much time, in seconds, until the next one?
-    std::exponential_distribution<> d(1.0);
-
-    std::map<uint64_t, uint64_t> hist;
-    for(int n=0; n<10000; ++n) {
-        ++hist[d(gen) / 0.0921034];
-    }
-    for(auto p : hist) {
-        std::cout << std::fixed << std::setprecision(1)
-        << p.first << '-' << (p.first+1) <<
-        ' ' << std::string(p.second/100, '*') << '\n';
-    }
-
     return 0;
 }
