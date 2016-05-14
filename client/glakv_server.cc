@@ -14,10 +14,11 @@
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
-#define BUF_LEN 512
-#define GET "Get"
-#define PUT "Put"
-#define DEL "Del"
+#define BUF_LEN     512
+#define GET         "Get"
+#define PUT         "Put"
+#define DEL         "Del"
+#define QUIT        "Quit"
 #define DB_SIZE     1000000
 #define NUM_CLIENTS 128
 #define NUM_EXP     100000
@@ -148,6 +149,7 @@ void serve_client(int sockfd, DB *db) {
         int GET_LEN = strlen(GET);
         int PUT_LEN = strlen(PUT);
         int DEL_LEN = strlen(DEL);
+        int QUIT_LEN = strlen(QUIT);
         if (strncmp(GET, buffer, GET_LEN) == 0) {
             uint64_t klen = get_unit64(buffer + GET_LEN);
 //            assert(len == GET_LEN + INT_LEN + klen);
@@ -195,6 +197,8 @@ void serve_client(int sockfd, DB *db) {
                 res[0] = 0;
                 res_len = 1;
             }
+        } else if (strncmp(QUIT, buffer, QUIT_LEN) == 0) {
+            break;
         }
         if (write(sockfd, res, res_len) != res_len) {
             cerr << "Error sending result to client" << endl;

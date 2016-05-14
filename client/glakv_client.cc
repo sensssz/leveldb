@@ -19,14 +19,15 @@
 #include <leveldb/db.h>
 #include <leveldb/write_batch.h>
 
+#define BUF_LEN     512
+#define GET         "Get"
+#define PUT         "Put"
+#define DEL         "Del"
+#define QUIT        "Quit"
 #define DB_SIZE     1000000
 #define NUM_CLIENTS 128
 #define NUM_EXP     100000
-#define BUF_LEN     512
 #define INT_LEN     (sizeof(uint64_t) / sizeof(char))
-#define GET "Get"
-#define PUT "Put"
-#define DEL "Del"
 
 using std::cerr;
 using std::cout;
@@ -132,6 +133,11 @@ void send_put(int sockfd, const char *key_buf, int klen, const char *val_buf, in
     assert(res_buf[0] == 1);
 }
 
+void send_quit(int sockfd) {
+    write(sockfd, QUIT, strlen(QUIT));
+    close(sockfd);
+}
+
 void load_data(uint64_t db_size) {
     int sockfd = connect();
     cout << "Loading " << db_size << " kv pairs into the database..." << endl;
@@ -154,6 +160,7 @@ void load_data(uint64_t db_size) {
         cout << "Loading" << progress_bar << percentage_done << '%' << endl;
     }
     cout << "All kv pairs loaded into the database." << endl;
+    send_quit(sockfd);
 }
 
 /*
