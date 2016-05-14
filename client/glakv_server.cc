@@ -277,6 +277,7 @@ int main(int argc, char *argv[])
     for (auto latency : latencies) {
         sum += latency;
     }
+    cout << "Sum is " << sum << endl;
 
     cout << latencies.size() << " operations done" << endl;
     cout << "Mean latency: " << (sum / latencies.size()) << endl;
