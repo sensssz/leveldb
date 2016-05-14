@@ -175,6 +175,7 @@ void prefetch_for_key(DB *db, char *key_buf, uint64_t klen) {
             *id = (key_val + db_size / 3) % db_size;
             Slice key(key_buf, klen);
             thread t(prefetch_kv, db, key);
+            cout << "Prefetching " << *id << "..." << endl;
         }
     }
 }

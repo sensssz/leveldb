@@ -7,6 +7,6 @@
 
 #define KEY_LEN         16
 #define VAL_LEN         1024
-#define NUM_PREFETCH    1
+#define NUM_PREFETCH    5
 
 #endif //LEVELDB_CONFIG_H
