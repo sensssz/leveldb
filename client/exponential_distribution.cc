@@ -14,7 +14,7 @@ using std::ceil;
 static const double LN10 = 2.30258509299;
 static const int PRECISION = 4;
 
-exponential_distribution::exponential_distribution(double lambda_in, uint64_t size_in) : lambda(lambda_in), dist(1),
+exponential_distribution::exponential_distribution(double lambda_in, uint64_t size_in) : lambda(lambda_in), dist(1.0 / lambda),
                                                                                     size(size_in) {
     std::random_device rd;
     generator.seed(rd());
