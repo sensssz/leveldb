@@ -24,7 +24,7 @@ glakv_client.o: glakv_client.cc config.h
 glakv_server.o: glakv_server.cc config.h
 	$(CC) $(CXXFLAGS) glakv_server.cc -o glakv_server.o
 
-exp_dist_test: exp_dist_tes.o exponential_distribution.o
+exp_dist_test: exp_dist_test.o exponential_distribution.o
 	$(CC) $(LDFLAGS) exp_dist_test.o exponential_distribution.o -o exp_dist_test
 
 exp_dist_test.o: exp_dist_test.cc
