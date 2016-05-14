@@ -308,6 +308,7 @@ int main(int argc, char *argv[])
                     cout << latencies.size() << " operations done" << endl;
                     cout << "Mean latency: " << (sum / latencies.size()) << endl;
                     latencies.clear();
+                    reported = true;
                 }
                 usleep(100);
                 continue;
