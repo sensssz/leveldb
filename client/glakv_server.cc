@@ -321,12 +321,13 @@ int main(int argc, char *argv[])
                     for (auto latency : latencies) {
                         sum += latency;
                     }
-                    cout << (sum / latencies.size()) << endl;
                     latencies.clear();
                     reported = true;
-                    ++count;
-                    if (count == num_exp) {
-                        break;
+                    if (num_exp > 0) {
+                        ++count;
+                        if (count == num_exp) {
+                            break;
+                        }
                     }
                 }
                 usleep(100);
