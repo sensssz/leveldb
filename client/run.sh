@@ -22,11 +22,11 @@ do
         fi
         ssh salat3 /bin/zsh << EOF
         export LD_LIBRARY_PATH=/home/jiamin/gcc/lib64:/home/jiamin/usr/lib:$LD_LIBRARY_PATH
-        echo "${p},${c}" >> ${output_path}/${exp_name}
+        echo  -n"${p},${c}," >> ${output_path}/${exp_name}
         ${db_path}/glakv_server --dir ${db_path}/glakv_home -p ${p} -n 1 >> ${output_path}/${exp_name}&
 EOF
         sleep 2
-        ${db_path}/glakv_client -e -s 1000000 -c ${c} -n 50000
+        ${db_path}/glakv_client -e -s 1000000 -c ${c} -n 20000
         sleep 1
     done
 done
